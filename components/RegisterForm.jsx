@@ -10,7 +10,7 @@ const RegisterForm = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
+    password2: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +26,7 @@ const RegisterForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.password2) {
       toast.error('Passwords do not match');
       setLoading(false);
       return;
@@ -42,7 +42,7 @@ const RegisterForm = () => {
           username: formData.username,
           email: formData.email,
           password: formData.password,
-          password2: formData.confirmPassword,
+          password2: formData.password2,
         }),
       });
 
@@ -111,18 +111,18 @@ const RegisterForm = () => {
         />
       </div>
       <div>
-        <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium">
+        <label htmlFor="password2" className="block mb-2 text-sm font-medium">
           Confirm Password
         </label>
         <input
           type="password"
-          id="confirmPassword"
-          name="confirmPassword"
+          id="password2"
+          name="password2"
           className="w-full px-3 py-2 border rounded-lg"
           placeholder="Confirm your password"
           required
           minLength={6}
-          value={formData.confirmPassword}
+          value={formData.password2}
           onChange={handleChange}
         />
       </div>
