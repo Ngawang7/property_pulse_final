@@ -4,7 +4,18 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { email, username, password, password2 } = await request.json();
+    // Parse request body
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        { message: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
+    const { email, username, password, password2 } = body;
 
     // Validate fields
     if (!email || !username || !password || !password2) {
@@ -73,7 +84,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error in register route:', error);
     return NextResponse.json(
-      { message: 'Error creating user' },
+      { message: 'Error creating user: ' + error.message },
       { status: 500 }
     );
   }

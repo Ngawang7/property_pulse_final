@@ -65,10 +65,16 @@ const RegisterForm = () => {
         }),
       });
 
-      const data = await res.json();
-
       // Dismiss loading toast
       toast.dismiss(loadingToast);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (error) {
+        console.error('Error parsing response:', error);
+        throw new Error('Invalid response from server');
+      }
 
       if (!res.ok) {
         throw new Error(data.message || 'Something went wrong');
