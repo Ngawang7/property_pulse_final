@@ -26,13 +26,32 @@ const RegisterForm = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Validate passwords match
     if (formData.password !== formData.password2) {
-      toast.error('Passwords do not match');
+      toast.error('Passwords do not match', {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters', {
+        position: "top-center",
+        autoClose: 3000,
+      });
       setLoading(false);
       return;
     }
 
     try {
+      // Show loading toast
+      const loadingToast = toast.loading('Creating your account...', {
+        position: "top-center",
+      });
+
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -48,11 +67,15 @@ const RegisterForm = () => {
 
       const data = await res.json();
 
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
       if (!res.ok) {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      toast.success('Account created successfully! Redirecting to sign in...', {
+      // Show success message
+      toast.success('Account created successfully!', {
         position: "top-center",
         autoClose: 2000,
         hideProgressBar: false,
@@ -61,6 +84,7 @@ const RegisterForm = () => {
         draggable: true,
       });
 
+      // Clear form
       setFormData({
         username: '',
         email: '',
@@ -68,6 +92,7 @@ const RegisterForm = () => {
         password2: '',
       });
 
+      // Wait for 2 seconds before redirecting
       setTimeout(() => {
         router.push('/auth/signin');
       }, 2000);
