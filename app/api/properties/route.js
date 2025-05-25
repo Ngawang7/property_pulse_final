@@ -102,17 +102,27 @@ export async function POST(request) {
     const formData = await request.formData();
     console.log('API - Form data received');
 
+    // Parse nested JSON fields
+    const location = JSON.parse(formData.get('location'));
+    const amenities = JSON.parse(formData.get('amenities'));
+    const rates = JSON.parse(formData.get('rates'));
+    const seller_info = JSON.parse(formData.get('seller_info'));
+
+    // Create property data object
     const propertyData = {
       type: formData.get('type'),
       name: formData.get('name'),
       description: formData.get('description'),
-      location: JSON.parse(formData.get('location')),
+      location: location,
       beds: parseInt(formData.get('beds')),
       baths: parseInt(formData.get('baths')),
       square_feet: parseInt(formData.get('square_feet')),
-      amenities: JSON.parse(formData.get('amenities')),
-      rates: JSON.parse(formData.get('rates')),
-      seller_info: JSON.parse(formData.get('seller_info')),
+      amenities: amenities,
+      rates: rates,
+      sellerName: seller_info.name,
+      sellerEmail: seller_info.email,
+      sellerPhone: seller_info.phone,
+      adminId: session.user.id,
     };
 
     console.log('API - Property data:', propertyData);
