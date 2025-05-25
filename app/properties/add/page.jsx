@@ -7,22 +7,25 @@ import Spinner from '@/components/Spinner';
 
 const PropertyAddPage = () => {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      console.log('Session not found, redirecting to sign in');
+      router.push('/auth/signin');
+    },
+  });
 
   useEffect(() => {
-    console.log('Session status:', status);
-    console.log('Session data:', session);
+    console.log('PropertyAddPage - Session status:', status);
+    console.log('PropertyAddPage - Session data:', session);
 
-    if (status === 'unauthenticated') {
-      console.log('User is not authenticated, redirecting to sign in');
-      router.push('/auth/signin');
-      return;
-    }
-
-    if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      console.log('User is not admin, redirecting to home');
-      router.push('/');
-      return;
+    if (status === 'authenticated') {
+      if (session?.user?.role !== 'ADMIN') {
+        console.log('User is not admin, redirecting to home');
+        router.push('/');
+      } else {
+        console.log('Admin access confirmed');
+      }
     }
   }, [status, session, router]);
 

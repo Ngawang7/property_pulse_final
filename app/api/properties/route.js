@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/utils/getSessionUser';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/utils/authOptions';
+import { NextResponse } from 'next/server';
+import { uploadImages } from '@/utils/cloudinary';
 
 // GET /api/properties
 export const GET = async (request) => {
@@ -76,160 +78,74 @@ export const GET = async (request) => {
   }
 };
 
-export const POST = async (request) => {
+export async function POST(request) {
   try {
-    // Get both session methods for debugging
-    const sessionUser = await getSessionUser();
-    const directSession = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions);
+    console.log('API - Session:', session);
 
-    console.log('Direct Session:', JSON.stringify(directSession, null, 2));
-    console.log('Session User:', JSON.stringify(sessionUser, null, 2));
-
-    if (!sessionUser || !sessionUser.userId) {
-      console.log('No session user found');
-      return Response.json(
-        { error: 'Unauthorized' },
+    if (!session) {
+      console.log('API - No session found');
+      return NextResponse.json(
+        { message: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Check if user exists in database
-    const dbUser = await prisma.user.findUnique({
-      where: { id: sessionUser.userId },
-      select: { role: true }
-    });
-
-    console.log('Database User:', JSON.stringify(dbUser, null, 2));
-
-    // Check if user is admin
-    console.log('Session User Role:', sessionUser.role);
-    console.log('Database User Role:', dbUser?.role);
-    
-    if (dbUser?.role !== 'ADMIN') {
-      console.log('User is not admin');
-      return Response.json(
-        { error: 'Only administrators can add properties' },
+    if (session.user.role !== 'ADMIN') {
+      console.log('API - User is not admin');
+      return NextResponse.json(
+        { message: 'Admin access required' },
         { status: 403 }
       );
     }
 
     const formData = await request.formData();
+    console.log('API - Form data received');
 
-    // Log form data for debugging
-    console.log('Form Data:', Object.fromEntries(formData.entries()));
-
-    // Handle amenities: parse if it's a JSON string
-    let amenities = formData.getAll('amenities') || [];
-    if (amenities.length === 1 && typeof amenities[0] === 'string' && amenities[0].startsWith('[')) {
-      try {
-        amenities = JSON.parse(amenities[0]);
-      } catch (e) {
-        console.error('Failed to parse amenities:', amenities[0], e);
-        amenities = [];
-      }
-    }
-
-    // Get all form data with validation
     const propertyData = {
-      name: formData.get('name') || '',
-      type: formData.get('type') || '',
-      description: formData.get('description') || '',
-      listingType: (formData.get('listingType') || 'SALE').toUpperCase(),
-      status: formData.get('status') || 'For Sale',
-      location: formData.get('location') || '',
-      price: parseFloat(formData.get('price')) || 0,
-      sellerName: formData.get('sellerName') || '',
-      sellerEmail: formData.get('sellerEmail') || '',
-      sellerPhone: formData.get('sellerPhone') || '',
-      adminId: sessionUser.userId,
+      type: formData.get('type'),
+      name: formData.get('name'),
+      description: formData.get('description'),
+      location: JSON.parse(formData.get('location')),
+      beds: parseInt(formData.get('beds')),
+      baths: parseInt(formData.get('baths')),
+      square_feet: parseInt(formData.get('square_feet')),
+      amenities: JSON.parse(formData.get('amenities')),
+      rates: JSON.parse(formData.get('rates')),
+      seller_info: JSON.parse(formData.get('seller_info')),
     };
 
-    // Validate required fields
-    if (!propertyData.name || !propertyData.type || !propertyData.listingType) {
-      return Response.json(
-        { error: 'Name, type, and listing type are required' },
-        { status: 400 }
-      );
+    console.log('API - Property data:', propertyData);
+
+    // Upload images to Cloudinary
+    const imageFiles = formData.getAll('images');
+    console.log('API - Number of images:', imageFiles.length);
+
+    if (imageFiles.length > 0) {
+      const uploadedImages = await uploadImages(imageFiles);
+      propertyData.images = uploadedImages;
     }
 
-    console.log('Property Data:', propertyData);
-
-    // Create property
-    try {
-      const property = await prisma.property.create({
-        data: propertyData,
-      });
-      console.log('Property created successfully:', property);
-
-      // Handle image uploads
-      const images = formData.getAll('images').filter(image => image.name !== '');
-      
-      if (images.length > 0) {
-        const imagePromises = images.map(async (image) => {
-          const buffer = await image.arrayBuffer();
-          const bytes = new Uint8Array(buffer);
-
-          return prisma.image.create({
-            data: {
-              filename: image.name,
-              data: Buffer.from(bytes),
-              mimeType: image.type,
-              propertyId: property.id,
-            },
-          });
-        });
-
-        await Promise.all(imagePromises);
-      }
-
-      // Fetch the created property with its images and seller info
-      const createdProperty = await prisma.property.findUnique({
-        where: { id: property.id },
-        select: {
-          id: true,
-          name: true,
-          type: true,
-          description: true,
-          location: true,
-          price: true,
-          listingType: true,
-          sellerName: true,
-          sellerEmail: true,
-          sellerPhone: true,
-          images: {
-            select: {
-              id: true,
-              filename: true,
-            },
-          },
-          admin: {
-            select: {
-              username: true,
-              email: true,
-            },
+    // Create property in database
+    const property = await prisma.property.create({
+      data: {
+        ...propertyData,
+        owner: {
+          connect: {
+            id: session.user.id,
           },
         },
-      });
+      },
+    });
 
-      return Response.json({
-        message: 'Property created successfully',
-        property: {
-          ...createdProperty,
-          images: createdProperty.images.map(img => `/api/images/${img.id}`),
-        },
-      });
-    } catch (error) {
-      console.error('Prisma error creating property:', error);
-      return Response.json(
-        { error: 'Failed to create property', details: error.message },
-        { status: 500 }
-      );
-    }
+    console.log('API - Property created successfully:', property);
+
+    return NextResponse.json(property, { status: 201 });
   } catch (error) {
-    console.error('Error creating property:', error);
-    return Response.json(
-      { error: 'Failed to add property', details: error.message },
+    console.error('API - Error creating property:', error);
+    return NextResponse.json(
+      { message: error.message || 'Error creating property' },
       { status: 500 }
     );
   }
-};
+}

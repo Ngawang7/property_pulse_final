@@ -12,6 +12,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials');
           throw new Error('Invalid credentials');
         }
 
@@ -29,6 +30,7 @@ export const authOptions = {
         });
 
         if (!user || !user.password) {
+          console.log('User not found or no password');
           throw new Error('Invalid credentials');
         }
 
@@ -38,9 +40,11 @@ export const authOptions = {
         );
 
         if (!isCorrectPassword) {
+          console.log('Invalid password');
           throw new Error('Invalid credentials');
         }
 
+        console.log('User authenticated successfully:', user.email);
         return {
           id: user.id,
           name: user.username,
@@ -52,11 +56,16 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
+      console.log('JWT Callback - Token:', token);
+      console.log('JWT Callback - User:', user);
+      
       if (trigger === 'update' && session) {
+        console.log('JWT Callback - Updating token with session:', session);
         return { ...token, ...session.user };
       }
       
       if (user) {
+        console.log('JWT Callback - Adding user data to token');
         return {
           ...token,
           id: user.id,
@@ -67,6 +76,9 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log('Session Callback - Token:', token);
+      console.log('Session Callback - Session:', session);
+      
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;
