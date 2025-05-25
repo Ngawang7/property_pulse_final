@@ -52,11 +52,32 @@ const RegisterForm = () => {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      toast.success('Registration successful! Please sign in.');
-      router.push('/auth/signin');
+      toast.success('Account created successfully! Redirecting to sign in...', {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        password2: '',
+      });
+
+      setTimeout(() => {
+        router.push('/auth/signin');
+      }, 2000);
+
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Error during registration');
+      toast.error(error.message || 'Error during registration', {
+        position: "top-center",
+        autoClose: 3000,
+      });
     } finally {
       setLoading(false);
     }
