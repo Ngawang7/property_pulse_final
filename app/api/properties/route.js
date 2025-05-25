@@ -8,11 +8,14 @@ import { uploadImages } from '@/utils/cloudinary';
 // GET /api/properties
 export const GET = async (request) => {
   try {
+    console.log('API - Fetching properties');
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const pageSize = parseInt(searchParams.get('pageSize')) || 6;
     const listingType = searchParams.get('listingType');
     const type = searchParams.get('type');
+
+    console.log('API - Query params:', { page, pageSize, listingType, type });
 
     const skip = (page - 1) * pageSize;
 
@@ -25,8 +28,11 @@ export const GET = async (request) => {
       where.type = type;
     }
 
+    console.log('API - Where clause:', where);
+
     // Get total count
     const total = await prisma.property.count({ where });
+    console.log('API - Total properties:', total);
 
     // Get properties with pagination
     const properties = await prisma.property.findMany({
@@ -62,7 +68,9 @@ export const GET = async (request) => {
       },
     });
 
-    return Response.json({
+    console.log('API - Properties fetched:', properties.length);
+
+    return NextResponse.json({
       total,
       properties: properties.map(property => ({
         ...property,
@@ -70,9 +78,13 @@ export const GET = async (request) => {
       })),
     });
   } catch (error) {
-    console.error('Error fetching properties:', error);
-    return Response.json(
-      { error: 'Failed to fetch properties', details: error.message },
+    console.error('API - Error fetching properties:', error);
+    return NextResponse.json(
+      { 
+        message: 'Failed to fetch properties',
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import PropertyCard from '@/components/PropertyCard';
 import Spinner from '@/components/Spinner';
 import Pagination from '@/components/Pagination';
+import { toast } from 'react-toastify';
 
 const Properties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [totalItems, setTotalItems] = useState(0);
@@ -14,19 +16,32 @@ const Properties = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const res = await fetch(
-          `/api/properties?page=${page}&pageSize=${pageSize}`
+          `/api/properties?page=${page}&pageSize=${pageSize}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          }
         );
 
         if (!res.ok) {
-          throw new Error('Failed to fetch data');
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to fetch properties');
         }
 
         const data = await res.json();
         setProperties(data.properties);
         setTotalItems(data.total);
       } catch (error) {
-        console.log(error);
+        console.error('Error fetching properties:', error);
+        setError(error.message);
+        toast.error(error.message || 'Failed to fetch properties. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -39,28 +54,55 @@ const Properties = () => {
     setPage(newPage);
   };
 
-  return loading ? (
-    <Spinner />
-  ) : (
+  if (loading) {
+    return (
+      <section className='px-4 py-6'>
+        <div className='container-xl lg:container m-auto px-4 py-6'>
+          <Spinner />
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className='px-4 py-6'>
+        <div className='container-xl lg:container m-auto px-4 py-6'>
+          <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
+            <strong className='font-bold'>Error: </strong>
+            <span className='block sm:inline'>{error}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
     <section className='px-4 py-6'>
       <div className='container-xl lg:container m-auto px-4 py-6'>
         {properties.length === 0 ? (
-          <p>No properties found</p>
+          <div className='text-center py-10'>
+            <h2 className='text-2xl font-bold text-gray-700 mb-4'>No Properties Found</h2>
+            <p className='text-gray-600'>Try adjusting your search criteria or check back later for new listings.</p>
+          </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
             {properties.map((property) => (
-              <PropertyCard key={property._id} property={property} />
+              <PropertyCard key={property.id} property={property} />
             ))}
           </div>
         )}
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={handlePageChange}
-        />
+        {totalItems > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
     </section>
   );
 };
+
 export default Properties;
