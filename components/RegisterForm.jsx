@@ -52,7 +52,7 @@ const RegisterForm = () => {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      toast.success('Registration successful');
+      toast.success('Registration successful! Please sign in.');
       router.push('/auth/signin');
     } catch (error) {
       console.error('Registration error:', error);
@@ -105,6 +105,7 @@ const RegisterForm = () => {
           className="w-full px-3 py-2 border rounded-lg"
           placeholder="Enter your password"
           required
+          minLength={6}
           value={formData.password}
           onChange={handleChange}
         />
@@ -120,6 +121,7 @@ const RegisterForm = () => {
           className="w-full px-3 py-2 border rounded-lg"
           placeholder="Confirm your password"
           required
+          minLength={6}
           value={formData.confirmPassword}
           onChange={handleChange}
         />
@@ -127,7 +129,7 @@ const RegisterForm = () => {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
+        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50"
       >
         {loading ? 'Creating Account...' : 'Register'}
       </button>

@@ -1,25 +1,33 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
-export const POST = async (request) => {
+export async function POST(request) {
   try {
     const { email, username, password, password2 } = await request.json();
 
     // Validate fields
     if (!email || !username || !password || !password2) {
-      return new Response('Missing required fields', { status: 400 });
+      return NextResponse.json(
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     // Validate password length
     if (password.length < 6) {
-      return new Response('Password must be at least 6 characters', {
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: 'Password must be at least 6 characters' },
+        { status: 400 }
+      );
     }
 
     // Validate password match
     if (password !== password2) {
-      return new Response('Passwords do not match', { status: 400 });
+      return NextResponse.json(
+        { message: 'Passwords do not match' },
+        { status: 400 }
+      );
     }
 
     // Check if user already exists
@@ -33,7 +41,10 @@ export const POST = async (request) => {
     });
 
     if (existingUser) {
-      return new Response('User already exists', { status: 400 });
+      return NextResponse.json(
+        { message: 'User already exists' },
+        { status: 400 }
+      );
     }
 
     // Hash password
@@ -43,14 +54,27 @@ export const POST = async (request) => {
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
-        username: username ? username.toLowerCase() : null,
+        username: username.toLowerCase(),
         password: hashedPassword,
+        role: 'USER',
       },
     });
 
-    return new Response(JSON.stringify(user), { status: 201 });
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json(
+      { 
+        message: 'User created successfully',
+        user: userWithoutPassword
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.log('Error in register route:', error);
-    return new Response('Something went wrong', { status: 500 });
+    console.error('Error in register route:', error);
+    return NextResponse.json(
+      { message: 'Error creating user' },
+      { status: 500 }
+    );
   }
-}; 
+} 
