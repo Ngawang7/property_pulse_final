@@ -21,9 +21,15 @@ export async function POST(request) {
     try {
       body = await request.json();
     } catch (error) {
-      return NextResponse.json(
-        { message: 'Invalid request body' },
-        { status: 400 }
+      console.error('Error parsing request body:', error);
+      return new NextResponse(
+        JSON.stringify({ message: 'Invalid request body' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -31,25 +37,40 @@ export async function POST(request) {
 
     // Validate fields
     if (!email || !username || !password || !password2) {
-      return NextResponse.json(
-        { message: 'Missing required fields' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ message: 'Missing required fields' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
     // Validate password length
     if (password.length < 6) {
-      return NextResponse.json(
-        { message: 'Password must be at least 6 characters' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ message: 'Password must be at least 6 characters' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
     // Validate password match
     if (password !== password2) {
-      return NextResponse.json(
-        { message: 'Passwords do not match' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ message: 'Passwords do not match' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -64,9 +85,14 @@ export async function POST(request) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { message: 'User already exists' },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ message: 'User already exists' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -86,11 +112,11 @@ export async function POST(request) {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
-    return NextResponse.json(
-      { 
+    return new NextResponse(
+      JSON.stringify({ 
         message: 'User created successfully',
         user: userWithoutPassword
-      },
+      }),
       { 
         status: 201,
         headers: {
@@ -100,8 +126,8 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error('Error in register route:', error);
-    return NextResponse.json(
-      { message: 'Error creating user: ' + error.message },
+    return new NextResponse(
+      JSON.stringify({ message: 'Error creating user: ' + error.message }),
       { 
         status: 500,
         headers: {
