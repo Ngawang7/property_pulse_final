@@ -2,16 +2,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { FaBars, FaTimes, FaUser, FaBookmark, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +30,28 @@ const Navbar = () => {
 
   // Check if we're on the home page
   const isHomePage = pathname === '/';
+
+  const handleNavigation = (path) => {
+    if (status === 'loading') {
+      toast.info('Please wait while we load your session...');
+      return;
+    }
+
+    // Check for protected routes
+    if (path === '/properties/add' && (!session || session.user.role !== 'ADMIN')) {
+      toast.error('You must be an admin to access this page');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (path === '/properties/saved' && !session) {
+      toast.error('You must be signed in to view saved properties');
+      router.push('/auth/signin');
+      return;
+    }
+
+    router.push(path);
+  };
 
   return (
     <nav
