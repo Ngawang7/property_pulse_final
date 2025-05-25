@@ -2,6 +2,18 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
+// Add OPTIONS handler for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Methods': 'POST',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
+// Handle POST requests
 export async function POST(request) {
   try {
     // Parse request body
@@ -79,13 +91,23 @@ export async function POST(request) {
         message: 'User created successfully',
         user: userWithoutPassword
       },
-      { status: 201 }
+      { 
+        status: 201,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   } catch (error) {
     console.error('Error in register route:', error);
     return NextResponse.json(
       { message: 'Error creating user: ' + error.message },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 } 

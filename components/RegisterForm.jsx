@@ -56,6 +56,7 @@ const RegisterForm = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           username: formData.username,
@@ -68,17 +69,12 @@ const RegisterForm = () => {
       // Dismiss loading toast
       toast.dismiss(loadingToast);
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (error) {
-        console.error('Error parsing response:', error);
-        throw new Error('Invalid response from server');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Registration failed' }));
+        throw new Error(errorData.message || 'Registration failed');
       }
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Something went wrong');
-      }
+      const data = await res.json();
 
       // Show success message
       toast.success('Account created successfully!', {
