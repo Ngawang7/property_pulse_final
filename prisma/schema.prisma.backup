@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String?   @unique
+  name          String?
+  password      String
+  image         String?
+  imageType     String?   // Store the MIME type of the image
+  imageData     Bytes?    // Store the actual image data
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookmarks     Property[] @relation("UserBookmarks")
+  messages      Message[]
+  properties    Property[] @relation("AdminProperties") // Properties created by admin
+}
+
+model Property {
+  id          String    @id @default(cuid())
+  adminId     String
+  admin       User      @relation("AdminProperties", fields: [adminId], references: [id], onDelete: Cascade)
+  name        String    // Changed from title to name to match form
+  description String
+  location    String
+  type        String    // House, Apartment, Land
+  status      String    // For Sale, For Rent
+  listingType String    // SALE, RENT
+  price       Float
+  images      Image[]   // Changed from String[] to Image[] relation
+  is_featured Boolean   @default(false)
+  sellerName  String    // Added seller info fields
+  sellerEmail String
+  sellerPhone String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookmarkedBy User[]   @relation("UserBookmarks")
+  messages    Message[]
+}
+
+model Image {
+  id          String    @id @default(cuid())
+  filename    String
+  data        Bytes     // Store the actual image data
+  mimeType    String    // Store the MIME type
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  content     String
+  read        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

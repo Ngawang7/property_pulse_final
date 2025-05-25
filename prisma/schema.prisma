@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  username   String?    @unique
+  password   String
+  image      String?
+  imageType  String?
+  imageData  Bytes?
+  role       Role       @default(USER)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  messages   Message[]
+  properties Property[] @relation("AdminProperties")
+  bookmarks  Property[] @relation("UserBookmarks")
+}
+
+model Property {
+  id           String    @id @default(cuid())
+  adminId      String
+  description  String
+  location     String
+  type         String
+  status       String
+  price        Float
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  is_featured  Boolean   @default(false)
+  name         String
+  listingType  String
+  sellerEmail  String
+  sellerName   String
+  sellerPhone  String
+  images       Image[]
+  messages     Message[]
+  admin        User      @relation("AdminProperties", fields: [adminId], references: [id], onDelete: Cascade)
+  bookmarkedBy User[]    @relation("UserBookmarks")
+}
+
+model Image {
+  id         String   @id @default(cuid())
+  filename   String
+  data       Bytes
+  mimeType   String
+  propertyId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
