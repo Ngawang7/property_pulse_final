@@ -35,7 +35,12 @@ const Properties = () => {
 
       return res;
     } catch (error) {
-      if (retries > 0 && (error.message.includes('Failed to fetch') || error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
+      if (retries > 0 && (
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+        error.message.includes('Database connection') ||
+        error.message.includes('Request timed out')
+      )) {
         console.log(`Retrying... ${retries} attempts left`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
         return fetchWithRetry(url, options, retries - 1);
@@ -70,6 +75,10 @@ const Properties = () => {
         
         if (error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
           toast.error('Please disable your ad blocker or security extensions to view properties.');
+        } else if (error.message.includes('Database connection')) {
+          toast.error('Database connection issue. Please try again in a few moments.');
+        } else if (error.message.includes('Request timed out')) {
+          toast.error('Request timed out. Please try again.');
         } else {
           toast.error(error.message || 'Failed to fetch properties. Please try again later.');
         }
@@ -110,6 +119,28 @@ const Properties = () => {
                   <li>Disabling your ad blocker for this site</li>
                   <li>Disabling security extensions</li>
                   <li>Using a different browser</li>
+                </ul>
+              </div>
+            )}
+            {error.includes('Database connection') && (
+              <div className='mt-2'>
+                <p className='text-sm'>We're experiencing database connection issues.</p>
+                <p className='text-sm'>Please try:</p>
+                <ul className='list-disc list-inside text-sm mt-1'>
+                  <li>Refreshing the page</li>
+                  <li>Waiting a few moments and trying again</li>
+                  <li>Contacting support if the issue persists</li>
+                </ul>
+              </div>
+            )}
+            {error.includes('Request timed out') && (
+              <div className='mt-2'>
+                <p className='text-sm'>The request took too long to complete.</p>
+                <p className='text-sm'>Please try:</p>
+                <ul className='list-disc list-inside text-sm mt-1'>
+                  <li>Refreshing the page</li>
+                  <li>Checking your internet connection</li>
+                  <li>Trying again in a few moments</li>
                 </ul>
               </div>
             )}
