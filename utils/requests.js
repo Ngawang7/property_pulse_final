@@ -37,6 +37,7 @@ async function fetchProperty(id, retries = MAX_RETRIES) {
       headers: {
         'Content-Type': 'application/json',
       },
+      next: { revalidate: 0 }, // Disable caching
     });
 
     if (!res.ok) {
@@ -50,7 +51,9 @@ async function fetchProperty(id, retries = MAX_RETRIES) {
     if (retries > 0 && (
       error.message.includes('Failed to fetch') || 
       error.message.includes('NetworkError') ||
-      error.message.includes('timeout')
+      error.message.includes('timeout') ||
+      error.message.includes('Database connection failed') ||
+      error.message.includes('Database query timeout')
     )) {
       console.log(`Retrying... ${retries} attempts left`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));

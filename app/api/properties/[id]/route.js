@@ -1,48 +1,107 @@
-import { prisma } from '@/lib/prisma';
+import { prisma, checkDatabaseConnection } from '@/lib/prisma';
 import { getSessionUser } from '@/utils/getSessionUser';
 import { NextResponse } from 'next/server';
 
 // GET /api/properties/:id
 export async function GET(request, { params }) {
   try {
+    // Check database connection first
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      return NextResponse.json(
+        { message: 'Database connection failed. Please try again later.' },
+        { 
+          status: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Surrogate-Control': 'no-store',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
     const propertyId = params.id;
+    console.log('API - Fetching property:', propertyId);
 
     if (!propertyId) {
       return NextResponse.json(
         { message: 'Property ID is required' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Surrogate-Control': 'no-store',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
 
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        description: true,
-        location: true,
-        price: true,
-        listingType: true,
-        sellerName: true,
-        sellerEmail: true,
-        sellerPhone: true,
-        images: true,
-        admin: {
-          select: {
-            username: true,
-            email: true,
+    // Get property with timeout
+    const property = await Promise.race([
+      prisma.property.findUnique({
+        where: { id: propertyId },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          description: true,
+          location: true,
+          price: true,
+          listingType: true,
+          sellerName: true,
+          sellerEmail: true,
+          sellerPhone: true,
+          images: {
+            select: {
+              id: true,
+              filename: true,
+            },
+          },
+          admin: {
+            select: {
+              username: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      )
+    ]);
 
     if (!property) {
       return NextResponse.json(
         { message: 'Property not found' },
-        { status: 404 }
+        { 
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Surrogate-Control': 'no-store',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
       );
     }
+
+    console.log('API - Property found:', property.id);
 
     // Transform image data to URLs
     const propertyWithImageUrls = {
@@ -50,12 +109,59 @@ export async function GET(request, { params }) {
       images: property.images.map(img => `/api/images/${img.id}`)
     };
 
-    return NextResponse.json(propertyWithImageUrls);
-  } catch (error) {
-    console.error('Error fetching property:', error);
     return NextResponse.json(
-      { message: 'Error fetching property' },
-      { status: 500 }
+      propertyWithImageUrls,
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
+    );
+  } catch (error) {
+    console.error('API - Error fetching property:', error);
+    
+    // Handle specific database errors
+    let errorMessage = 'Error fetching property';
+    let statusCode = 500;
+
+    if (error.message.includes('Database connection failed')) {
+      errorMessage = 'Database connection failed. Please try again later.';
+      statusCode = 503;
+    } else if (error.message.includes('Database query timeout')) {
+      errorMessage = 'Request timed out. Please try again.';
+      statusCode = 504;
+    } else if (error.message.includes('P1001')) {
+      errorMessage = 'Database connection error. Please try again later.';
+      statusCode = 503;
+    }
+
+    return NextResponse.json(
+      { 
+        message: errorMessage,
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
+      { 
+        status: statusCode,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }
