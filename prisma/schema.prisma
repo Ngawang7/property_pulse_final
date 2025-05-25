@@ -49,11 +49,16 @@ model Image {
   id         String   @id @default(cuid())
   filename   String
   data       Bytes
-  mimeType   String
+  mimeType   String   @default("image/jpeg")
+  size       Int      // Size in bytes
+  width      Int?     // Optional image width
+  height     Int?     // Optional image height
   propertyId String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
 }
 
 model Message {

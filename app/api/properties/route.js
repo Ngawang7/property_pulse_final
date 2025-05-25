@@ -3,7 +3,6 @@ import { getSessionUser } from '@/utils/getSessionUser';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/utils/authOptions';
 import { NextResponse } from 'next/server';
-import { uploadImages } from '@/utils/cloudinary';
 
 // GET /api/properties
 export const GET = async (request) => {
@@ -198,16 +197,11 @@ export async function POST(request) {
 
     console.log('API - Property data:', propertyData);
 
-    // Upload images to Cloudinary
+    // Handle image uploads
     const imageFiles = formData.getAll('images');
     console.log('API - Number of images:', imageFiles.length);
 
-    if (imageFiles.length > 0) {
-      const uploadedImages = await uploadImages(imageFiles);
-      propertyData.images = uploadedImages;
-    }
-
-    // Create property in database
+    // Create property with images
     const property = await prisma.property.create({
       data: {
         ...propertyData,
@@ -216,6 +210,17 @@ export async function POST(request) {
             id: session.user.id,
           },
         },
+        images: {
+          create: imageFiles.map(file => ({
+            filename: file.name,
+            data: file,
+            mimeType: file.type,
+            size: file.size,
+          })),
+        },
+      },
+      include: {
+        images: true,
       },
     });
 
