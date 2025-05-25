@@ -173,7 +173,7 @@ const Navbar = () => {
           <div className='space-y-1 px-2 pb-3 pt-2'>
             <Link
               href='/'
-              className={`block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200 ${
+              className={`block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200 ${
                 pathname === '/' ? 'bg-blue-300/50' : ''
               }`}
             >
@@ -181,7 +181,7 @@ const Navbar = () => {
             </Link>
             <Link
               href='/properties/sale'
-              className={`block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200 ${
+              className={`block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200 ${
                 pathname === '/properties/sale' ? 'bg-blue-300/50' : ''
               }`}
             >
@@ -189,7 +189,7 @@ const Navbar = () => {
             </Link>
             <Link
               href='/properties/rent'
-              className={`block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200 ${
+              className={`block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200 ${
                 pathname === '/properties/rent' ? 'bg-blue-300/50' : ''
               }`}
             >
@@ -197,7 +197,7 @@ const Navbar = () => {
             </Link>
             <Link
               href='/mortgage-calculator'
-              className={`block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200 ${
+              className={`block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200 ${
                 pathname === '/mortgage-calculator' ? 'bg-blue-300/50' : ''
               }`}
             >
@@ -206,7 +206,7 @@ const Navbar = () => {
             {session?.user?.role === 'ADMIN' && (
               <Link
                 href='/properties/add'
-                className={`block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200 ${
+                className={`block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200 ${
                   pathname === '/properties/add' ? 'bg-blue-300/50' : ''
                 }`}
               >
@@ -217,19 +217,19 @@ const Navbar = () => {
               <>
                 <Link
                   href='/profile'
-                  className='block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200'
+                  className='block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200'
                 >
                   Profile
                 </Link>
                 <Link
                   href='/properties/saved'
-                  className='block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200'
+                  className='block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200'
                 >
                   Saved Properties
                 </Link>
                 <Link
                   href='/api/auth/signout'
-                  className='block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200'
+                  className='block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200'
                 >
                   Sign Out
                 </Link>
@@ -238,13 +238,13 @@ const Navbar = () => {
               <>
                 <Link
                   href='/auth/signin'
-                  className='block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200'
+                  className='block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200'
                 >
                   Sign In
                 </Link>
                 <Link
                   href='/auth/register'
-                  className='block rounded-md px-3 py-2 text-base font-medium text-blue-800 hover:bg-blue-300/50 transition-colors duration-200'
+                  className='block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-blue-300/50 transition-colors duration-200'
                 >
                   Sign Up
                 </Link>
