@@ -53,12 +53,10 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update' && session) {
-        // Handle session update
         return { ...token, ...session.user };
       }
       
       if (user) {
-        // Initial sign in
         return {
           ...token,
           id: user.id,
@@ -69,15 +67,12 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role,
-          username: token.name,
-        },
-      };
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.username = token.name;
+      }
+      return session;
     },
   },
   pages: {
@@ -88,5 +83,5 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Enable debug mode
 };
