@@ -6,9 +6,10 @@ import { toast } from 'react-toastify';
 
 const PropertyAddForm = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   
   console.log('PropertyAddForm - Session:', session);
+  console.log('PropertyAddForm - Status:', status);
 
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,6 +103,12 @@ const PropertyAddForm = () => {
     setLoading(true);
 
     try {
+      if (!session || session.user.role !== 'ADMIN') {
+        toast.error('You must be an admin to add properties');
+        router.push('/auth/signin');
+        return;
+      }
+
       console.log('Submitting property with session:', session);
       
       const formData = new FormData();

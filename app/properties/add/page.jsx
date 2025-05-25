@@ -7,28 +7,22 @@ import Spinner from '@/components/Spinner';
 
 const PropertyAddPage = () => {
   const router = useRouter();
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      console.log('Session not found, redirecting to sign in');
-      router.push('/auth/signin');
-    },
-  });
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     console.log('PropertyAddPage - Session status:', status);
     console.log('PropertyAddPage - Session data:', session);
 
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ADMIN') {
-        console.log('User is not admin, redirecting to home');
-        router.push('/');
-      } else {
-        console.log('Admin access confirmed');
-      }
+    if (status === 'unauthenticated') {
+      console.log('User not authenticated, redirecting to sign in');
+      router.push('/auth/signin');
+    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      console.log('User is not admin, redirecting to home');
+      router.push('/');
     }
   }, [status, session, router]);
 
+  // Show loading spinner while checking session
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -37,6 +31,7 @@ const PropertyAddPage = () => {
     );
   }
 
+  // Only show the form if user is authenticated and is an admin
   if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
     return (
       <section className='bg-blue-50'>
@@ -49,6 +44,7 @@ const PropertyAddPage = () => {
     );
   }
 
+  // Return null for any other state (will be handled by useEffect redirects)
   return null;
 };
 
