@@ -70,22 +70,49 @@ export const GET = async (request) => {
 
     console.log('API - Properties fetched:', properties.length);
 
-    return NextResponse.json({
-      total,
-      properties: properties.map(property => ({
-        ...property,
-        images: property.images.map(img => `/api/images/${img.id}`),
-      })),
-    });
+    return new NextResponse(
+      JSON.stringify({
+        total,
+        properties: properties.map(property => ({
+          ...property,
+          images: property.images.map(img => `/api/images/${img.id}`),
+        })),
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
   } catch (error) {
     console.error('API - Error fetching properties:', error);
-    return NextResponse.json(
-      { 
+    return new NextResponse(
+      JSON.stringify({
         message: 'Failed to fetch properties',
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      },
-      { status: 500 }
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
     );
   }
 };
